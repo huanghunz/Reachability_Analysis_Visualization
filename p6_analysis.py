@@ -1,64 +1,119 @@
 from p6_game import Simulator
+import copy
 
-ANALYSIS = {}
 
-width = 32
-height = 18
+
+def reset_ANALYSIS():
+    global ANALYSIS 
+    ANALYSIS = {}
+
+
 sim = None
 moves = []
 
+
+def get_adj(sim, curr_state, moves, ability_list ):
+    adj_list = []
+
+    # print "abi = ", ability_list
+    # print "cur - ", curr_state[1]
+    update_state = (curr_state[0], ability_list)
+    #check = False
+    #print "[1] :", curr_state[1]
+    #s = copy.copy(special_list)
+    for move in moves: 
+
+        try: 
+            next_state = sim.get_next_state(update_state, move)
+        except:
+            next_state = None
+
+        # #if next_state:
+        # # ex. ((10, 5), frozenset(['water_survival']))
+        # if not next_state: # die
+
+        #     while s and not next_state: # multi abilities, want to get a avaiable state
+
+        #         special_state = s.pop() # ability state
+        #         try:
+        #             next_state = sim.get_next_state(special_state, move)
+        #             print next_state
+        #             check = True
+        #         except:
+        #             #next_state = None
+
+        if next_state:
+            adj_list.append((next_state) )
+  
+    return adj_list
+
+
 def analyze(design):
+
+    reset_ANALYSIS()
     sim = Simulator(design)
     # TODO: fill in this function, populating the ANALYSIS dict
     init = sim.get_initial_state()
-    print "init: " + str(init)
+  #  print "init: " + str(init[0])
     moves = sim.get_moves()
-    print "move: " + str(moves)
+  #  print "move: " + str(moves)
 
-    next_state = sim.get_next_state(init, moves[3])
-    print "next state 1: " + str(next_state)
-    next_state = sim.get_next_state(next_state, moves[3])
-    print "next state 2: " + str(next_state)
+    width, height = sim.get_map_size()
 
-    '''
-    i = 0
-    while i < 10:
-        next_state = sim.get_next_state(next_state, moves[3])
-        print "next state: " + str(next_state)
-        i += 1
-    '''
+    path = []
+    #ANALYSIS = {}
 
-    #position, abilities = next_state # or None if character dies
-    #i, j = position
-
-    #path = bfs(init,next_state,adj,sim,moves)
-    #ANALYSIS[next_state] = path
+    queue = []
+    prev = {init:None}
+    ANALYSIS[init[0]] = None
 
 
+    # print
+    # print "================="
+    # print ANALYSIS[init[0]]
+    # print
+    # print
+    # print "================="
 
-    x = 1
-    y = 1
-    while y < 32:
-        x = 1
-        while x < 17:
 
-            current_state = ((x,y),frozenset())
-            path = bfs(init,current_state,adj,sim,moves)
-            #$path = []
-            ANALYSIS[current_state] = path
-            #print x," ", y
-            x += 1
-        y += 1
+    discovered = []
 
-    current_state = ((3,3),frozenset())
-    print "Analysis : " + str( ANALYSIS )
-    print "Analysis -- : " + str( ANALYSIS[ current_state] )
-    #raise NotImplementedError
+    discovered.append(init[0])
+   
+    queue.append(init)
+    ability_list = frozenset()
+
+    while queue:
+        curr_state = queue.pop()
+
+        adj_list = get_adj(sim, curr_state, moves, ability_list) #[ ( (), check) ]
+
+        for adj in adj_list:
+
+        
+            if adj[0] not in discovered :
+                if adj[1]:
+                    ability_list = adj[1]
+                discovered.append(adj[0])
+                queue.append(adj)
+               # prev[adj] = curr_state
+                ANALYSIS[adj[0]] = curr_state
+              
+    # for a in ANALYSIS:
+    #     print ANALYSIS[a][0], " - "
+
+    print ANALYSIS[init[0]]
+
     return
+
 
 def inspect((i,j), draw_line):
     # TODO: use ANALYSIS and (i,j) draw some lines
     #raise NotImplementedError
+
+    #return
+  # prevTable = ANALYSIS
+  
 
     src = (1,1)
     dst = (i,j)
@@ -68,41 +123,54 @@ def inspect((i,j), draw_line):
     src_state = fake_convert(src)
 
 
-    #print "Analysis: " + str( ANALYSIS )
-    parent = ANALYSIS[dst_state] # parent is a list
-    print "parent" + str(parent)
+    # #print "Analysis: " + str( ANALYSIS )
+    parent = ANALYSIS # parent is a list
+  
     path = []
-    '''
+    node = parent[src]
+
+    #print node
+
+
+
     if parent:
-        node = dst_state
-        # while node in parent:
-        #     #print "node: " + str(node)
-        #     path.append(node)
-        #     node = parent[node]
-        #     #print "parent" + str(parent[node])
-        #     #print "node" + str(node)
-        #     #draw_line((parent[node])[0], node[0],offset_obj=None, color_obj=None)
-        # path.append(src_state)
-        for node in parent:
-            path.append(node)
-    '''
+        node = dst_state[0]
 
-    print path
-    path = parent
-    #print "testing: ", path[0][0]
-    for next in path:
-        draw_line(dst, next[0], offset_obj=None, color_obj=None)
-        dst = next[0]
+       # print node
+        node = parent[dst] # get a state ---> ( (x,y), abi_set)
+        while node:
 
+            #print "node: " + str(node)
 
+            path.append(node[0])
+            node = (parent[node[0]]) #
 
-    #print node[0]
-    #draw_line(node[0], (1,1), offset_obj=None, color_obj=None)
+            #print "parent" + str(parent[node])
+            #print "node" + str(node)
+            #draw_line((parent[node])[0], node[0],offset_obj=None, color_obj=None)
+        path.append(src_state[0])
+        #for node in parent:
+        #    path.append(node)
+    
+
+    # print path
+    # ANALYSIS[a][0]
+    #path = ANALYSIS
     #print path
-    #draw_line((1,1), (2,2), offset_obj=None, color_obj=None)
-    #draw_line((1,2), (2,2), offset_obj=None, color_obj=None)
-    #draw_line((2,2), (3,2), offset_obj=None, color_obj=None)
-    print "return"
+    # #print "testing: ", path[0][0]
+    for next in path:
+         draw_line(dst, next, offset_obj=None, color_obj=None)
+         dst = next
+
+
+
+    # #print node[0]
+    # #draw_line(node[0], (1,1), offset_obj=None, color_obj=None)
+    # #print path
+    # #draw_line((1,1), (2,2), offset_obj=None, color_obj=None)
+    # #draw_line((1,2), (2,2), offset_obj=None, color_obj=None)
+    # #draw_line((2,2), (3,2), offset_obj=None, color_obj=None)
+    # print "return"
 
     return
 
@@ -121,8 +189,6 @@ def adj(src,sim,moves):
         state_list.append((next_pos,next_abi))
         i += 1
     return state_list
-
-
 
 
 def bfs(source, target, adj,sim,moves):
