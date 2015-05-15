@@ -1,10 +1,12 @@
 from p6_game import Simulator
 
 
-
 def get_adj(sim, state):
+    """
+        The function gets the simulator and state
+        return a list of available adjacents
+    """
     adj_list = []
-
 
     for move in sim.get_moves():
         try:
@@ -15,63 +17,56 @@ def get_adj(sim, state):
         if next_state:
             adj_list.append((next_state) )
 
-    return adj_list
-            
+    return adj_list    
 
 
 def analyze(design):
-
-
-    sim = Simulator(design)
-    # TODO: fill in this function, populating the ANALYSIS dict
-    init = sim.get_initial_state()
-
-
+    """
+        Gets a design object from p6_tool
+        Do breath first search to find path for every position, 
+        Save a dictionary of parent states.
+    """
     global ANALYSIS
+    sim = Simulator(design)
 
-    queue = []
+    init = sim.get_initial_state()
     ANALYSIS = {init: (None, None)}
 
-
+    queue = []
     queue.append(init)
+
     while queue:
-        curr_state = queue.pop(0)
+        curr_state = queue.pop(0) # list.pop(0) gets the first item, pop() gets the last one
         adj_list = get_adj(sim, curr_state)
         for adj in adj_list:
             if adj not in ANALYSIS:
                 queue.append(adj)
                 ANALYSIS[adj] = curr_state
 
-
-    print ANALYSIS
-
     return
 
 def inspect((i,j), draw_line):
-    src = (1,1)
-    possible_solution_list = get_possible_solution(ANALYSIS, (i,j))
-    #print possible_solution_list
+    """
+        Called when mouse hovers.
+        Get coordination and a draw line function
+        Pass line segments to draw_line function to draw on GUI
+    """
+   
+    # look in the ANALYSIS dictionary to fetch all the possible path to the coordination
+    for state in ANALYSIS:
 
-    for solution in possible_solution_list:
-        _, color_offset = solution
-        node = solution
-        #print "node ", node
-        while node:
-            curr_location, _ = node
-            node = ANALYSIS[node]
-            next, _ = node
+        if (i,j) == state[0]: 
+            _, color_offset = state
+            node = state
+           
+            while node:
+                curr_location, _ = node
+                node = ANALYSIS[node]
+                next, _ = node
 
-            if next and curr_location:
-                draw_line(next, curr_location, color_offset, color_offset)
-            else:
-                break
-
-
-
-def get_possible_solution(analysis,coord):
-    newlist = []
-    for state in analysis:
-        if coord == state[0]:
-            newlist.append(state)
-    return newlist
+                if next and curr_location:
+                    draw_line(next, curr_location, color_offset, color_offset)
+                else:
+                    break
+    return
 
